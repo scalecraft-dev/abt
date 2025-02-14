@@ -1,0 +1,605 @@
+/* Modern color palette */
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --danger-color: #dc2626;
+  --danger-hover: #b91c1c;
+  --success-color: #059669;
+  --success-hover: #047857;
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+}
+
+/* Base page styles */
+.agents-page {
+  padding: 2rem;
+  background-color: var(--neutral-50);
+  min-height: 100vh;
+}
+
+/* Header styles */
+.agents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.agents-header h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+/* Button styles */
+.create-button {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.create-button:disabled {
+  background-color: var(--neutral-400);
+  cursor: not-allowed;
+}
+
+/* Card grid */
+.agents-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Agent card styles */
+.agent-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border: 1px solid var(--neutral-200);
+  transition: all 0.2s;
+}
+
+.agent-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.agent-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.agent-info h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin: 0;
+}
+
+.agent-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--neutral-100);
+  border: 2px solid var(--neutral-200);
+}
+
+.agent-card p {
+  color: var(--neutral-600);
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+/* Status styles */
+.agent-status {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-status span {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.agent-status .active {
+  background-color: #dcfce7;
+  color: var(--success-color);
+}
+
+.agent-status .inactive {
+  background-color: var(--neutral-100);
+  color: var(--neutral-600);
+}
+
+/* Capability tags */
+.capability-tag {
+  display: inline-flex;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  overflow-y: auto;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  margin: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin-bottom: 1.5rem;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--neutral-700);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--neutral-300);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  color: var(--neutral-900);
+  background-color: white;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Avatar controls */
+.avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background-color: var(--neutral-50);
+  border-radius: 8px;
+  border: 1px solid var(--neutral-200);
+}
+
+.avatar-preview {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 2px solid var(--neutral-200);
+}
+
+.avatar-controls {
+  flex-grow: 1;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.avatar-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--neutral-300);
+  border-radius: 6px;
+  background-color: white;
+  color: var(--neutral-700);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.avatar-button:hover {
+  border-color: var(--primary-color);
+  background-color: var(--neutral-50);
+}
+
+.avatar-button.active {
+  border-color: var(--primary-color);
+  background-color: #eff6ff;
+  color: var(--primary-color);
+}
+
+.upload-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.upload-button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Action buttons */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--neutral-200);
+}
+
+.cancel-button {
+  padding: 0.625rem 1.25rem;
+  background-color: white;
+  color: var(--neutral-700);
+  border: 1px solid var(--neutral-300);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: var(--neutral-50);
+  border-color: var(--neutral-400);
+}
+
+/* Emoji picker styles */
+.emoji-picker-container {
+  position: relative;
+  z-index: 1000;
+}
+
+.emoji-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.emoji-picker-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 1001;
+}
+
+/* Edit/Delete buttons */
+.edit-button,
+.delete-button {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.edit-button {
+  background-color: var(--neutral-200);
+  color: var(--neutral-700);
+}
+
+.edit-button:hover {
+  background-color: var(--neutral-500);
+}
+
+.delete-button {
+  background-color: #fee2e2;
+  color: var(--danger-color);
+}
+
+.delete-button:hover {
+  background-color: #fecaca;
+}
+
+/* Avatar styles */
+.emoji-avatar {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.image-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-type-selector {
+  display: flex;
+  gap: 1rem;
+}
+
+.avatar-type-selector label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.agent-card .emoji-avatar {
+  font-size: 1.5rem;
+}
+
+.hint {
+  color: #7f8c8d;
+  margin-bottom: 1rem;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.agent-form {
+  margin-bottom: 1.5rem;
+  transform: translateZ(0);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Avatar styles */
+.avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.avatar-preview {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 2px solid #bdc3c7;
+}
+
+.emoji-avatar {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.image-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-controls {
+  flex-grow: 1;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.avatar-type-selector {
+  display: flex;
+  gap: 1rem;
+}
+
+.avatar-type-selector label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.agent-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.agent-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border: 2px solid #bdc3c7;
+}
+
+.agent-card .emoji-avatar {
+  font-size: 1.5rem;
+}
+
+.avatar-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.avatar-button:hover {
+  border-color: #3498db;
+  background-color: #f7f9fc;
+}
+
+.avatar-button.active {
+  border-color: #3498db;
+  background-color: #ebf5fb;
+}
+
+.upload-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+}
+
+.upload-button:hover {
+  background-color: #2980b9;
+}
+
+.upload-button.active {
+  background-color: #2980b9;
+}
+
+.emoji-icon,
+.upload-icon {
+  font-size: 1.2rem;
+}
+
+.emoji-select-button {
+  padding: 0.5rem 1rem;
+  background-color: #f7f9fc;
+  border: 2px solid #bdc3c7;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.emoji-select-button:hover {
+  border-color: #3498db;
+  background-color: #ebf5fb;
+}
+
+/* Add styles for the EmojiPicker component */
+.EmojiPickerReact {
+  --epr-hover-bg-color: #f7f9fc !important;
+  --epr-focus-bg-color: #ebf5fb !important;
+  --epr-highlight-color: #3498db !important;
+  --epr-search-border-color: #bdc3c7 !important;
+}
+
+/* Fix the search input styles */
+.EmojiPickerReact .epr-search {
+  margin: 0.5rem !important;
+}
+
+.EmojiPickerReact input.epr-search {
+  background-color: white !important;
+  border: 1px solid #bdc3c7 !important;
+  border-radius: 4px !important;
+  padding: 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+.llm-config {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.llm-config select,
+.llm-config input {
+  padding: 0.5rem;
+  border: 1px solid var(--neutral-300);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.llm-config select {
+  grid-column: 1 / -1;
+}
+
+.chat-button {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--primary-color);
+  color: white;
+  transition: all 0.2s;
+}
+
+.chat-button:hover {
+  background-color: var(--primary-hover);
+} 

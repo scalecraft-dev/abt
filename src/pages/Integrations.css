@@ -1,0 +1,264 @@
+.integrations-page {
+  padding: 2rem;
+  background-color: var(--neutral-50);
+  min-height: 100vh;
+}
+
+.integrations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.integrations-header h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+}
+
+.integrations-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.integration-type {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.integration-type h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--neutral-700);
+}
+
+.integration-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.integration-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border: 1px solid var(--neutral-200);
+  transition: all 0.2s;
+}
+
+.integration-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.integration-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.integration-info h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin: 0;
+}
+
+.integration-info p {
+  color: var(--neutral-600);
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.integration-type {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-button,
+.delete-button {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.edit-button {
+  background-color: var(--neutral-200);
+  color: var(--neutral-700);
+}
+
+.edit-button:hover {
+  background-color: var(--neutral-500);
+}
+
+.delete-button {
+  background-color: #fee2e2;
+  color: var(--danger-color);
+}
+
+.delete-button:hover {
+  background-color: #fecaca;
+}
+
+.page-container {
+  padding: 2rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.page-description {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.content-section {
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.page-content {
+  background-color: #F9FAFB;
+  min-height: calc(100vh - 4rem);
+  padding: 1.5rem;
+}
+
+.page-actions {
+  margin-bottom: 1.5rem;
+}
+
+.action-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.action-button.primary {
+  background-color: #2563EB;
+  color: white;
+}
+
+.action-button.primary:hover {
+  background-color: #1D4ED8;
+}
+
+.add-integration-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-integration-button:hover {
+  background-color: #1D4ED8;
+}
+
+.add-integration-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--neutral-200);
+}
+
+.empty-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-900);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: var(--neutral-600);
+  margin-bottom: 1.5rem;
+}
+
+/* Button styles */
+.create-button {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* List styles */
+.integrations-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.no-integrations {
+  text-align: center;
+  padding: 2rem;
+  color: var(--neutral-600);
+  font-size: 0.875rem;
+} 

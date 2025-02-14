@@ -1,0 +1,41 @@
+.job-view {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.job-view-header {
+  padding: 1rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid var(--neutral-200);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.job-view-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.back-button {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: 1px solid var(--neutral-300);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--neutral-700);
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--neutral-50);
+  border-color: var(--neutral-400);
+}
+
+.job-view-content {
+  flex: 1;
+  overflow: hidden;
+} 

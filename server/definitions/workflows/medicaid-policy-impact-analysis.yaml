@@ -1,0 +1,4 @@
+name: "Medicaid Policy Impact Analysis"
+description: "Analyzes state-level Medicaid policy implementations and their effects on healthcare access and outcomes"
+status: "inactive"
+schedule: "daily"
