@@ -11,11 +11,30 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-height: 44px;
+  min-width: 184px;
+  padding: 0.5rem 0;
 }
 
 .integration-icon {
-  width: 32px;
-  height: 32px;
+  width: 184px;
+  height: 44px;
+  object-fit: contain;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.integration-icon.loading {
+  opacity: 0;
+}
+
+.integration-icon-placeholder {
+  width: 24px;
+  height: 24px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
 }
 
 .integration-description {
@@ -62,6 +81,17 @@
 .integration-button.disconnect {
   background: var(--danger-color);
   color: white;
+}
+
+.integration-button.delete {
+  background: var(--danger-color);
+  color: white;
+  margin-left: 0.5rem;
+}
+
+.integration-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .add-integration-modal {

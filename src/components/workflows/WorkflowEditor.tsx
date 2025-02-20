@@ -102,9 +102,6 @@ const connectionLineStyle = {
 };
 
 const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId, workflow: initialWorkflow }) => {
-  console.log('Initial workflow DAG:', initialWorkflow.dag);
-  console.log('Converted nodes:', initialWorkflow.dag.nodes.map(convertToReactFlowNode));
-
   const dispatch = useAppDispatch();
   const agents = useAppSelector(state => state.agent.agents);
   const [initialized, setInitialized] = useState(false);
@@ -124,11 +121,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({ workflowId, workflow: i
       setInitialized(true);
     }
   }, [initialized, initialWorkflow.dag, setNodes, setEdges, agents]);
-
-  // Monitor nodes state changes
-  useEffect(() => {
-    console.log('Nodes state updated:', nodes);
-  }, [nodes]);
 
   // Fetch agents when component mounts
   useEffect(() => {

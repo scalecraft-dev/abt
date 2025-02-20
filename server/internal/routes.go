@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"github.com/scalecraft/abt/integrations"
 )
 
 func SetupRoutes(r *gin.Engine, db *sql.DB, llmClient LLMClient) {
@@ -50,24 +49,25 @@ func SetupRoutes(r *gin.Engine, db *sql.DB, llmClient LLMClient) {
 			integrationRoutes.GET("/available", ListAvailableIntegrations(db))
 			integrationRoutes.POST("/", CreateIntegration(db))
 			integrationRoutes.PUT("/:id", UpdateIntegration(db))
+			integrationRoutes.GET("/:id", GetIntegration(db))
 			integrationRoutes.DELETE("/:id", DeleteIntegration(db))
 
 			googleDrive := integrationRoutes.Group("/google-drive")
 			{
-				googleDrive.GET("/auth", integrations.InitiateGoogleDriveAuth(db))
-				googleDrive.GET("/callback", integrations.HandleGoogleDriveCallback(db))
-				googleDrive.POST("/disconnect", integrations.DisconnectGoogleDrive(db))
-				googleDrive.GET("/status", integrations.GetIntegrationStatus(db))
+				googleDrive.GET("/auth", InitiateGoogleDriveAuth(db))
+				googleDrive.GET("/callback", HandleGoogleDriveCallback(db))
+				googleDrive.POST("/disconnect", DisconnectGoogleDrive(db))
+				googleDrive.GET("/status", GetIntegrationStatus(db))
 			}
 
 			// Add Snowflake routes
 			snowflake := integrationRoutes.Group("/snowflake")
 			{
-				snowflake.POST("/connect", integrations.ConnectSnowflake(db))
-				snowflake.POST("/disconnect", integrations.DisconnectSnowflake(db))
-				snowflake.GET("/status", integrations.GetSnowflakeStatus(db))
-				snowflake.POST("/query", integrations.QuerySnowflake(db))
-				snowflake.POST("/test", integrations.TestSnowflake(db))
+				snowflake.POST("/connect", ConnectSnowflake(db))
+				snowflake.POST("/disconnect", DisconnectSnowflake(db))
+				snowflake.GET("/status", GetSnowflakeStatus(db))
+				snowflake.POST("/query", QuerySnowflake(db))
+				snowflake.POST("/test", TestSnowflake(db))
 			}
 		}
 	}

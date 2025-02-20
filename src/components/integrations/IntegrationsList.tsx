@@ -1,67 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Integration } from '../../services/api';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import IntegrationCard from './IntegrationCard';
+import AddIntegrationModal from './AddIntegrationModal';
 import './IntegrationsList.css';
 
 interface IntegrationsListProps {
-  availableIntegrations: Integration[];
-  configuredIntegrations: Integration[];
-  onDelete: (id: string) => Promise<void>;
+  integrations: Integration[];
+  onEdit: (integration: Integration) => void;
+  onAddIntegration: (integration: Integration) => void;
+  onUpdateIntegration: (integration: Integration) => void;
 }
 
-const IntegrationsList: React.FC<IntegrationsListProps> = ({ 
-  configuredIntegrations, 
-  onDelete 
+const IntegrationsList: React.FC<IntegrationsListProps> = ({
+  integrations,
+  onEdit,
+  onAddIntegration,
+  onUpdateIntegration
 }) => {
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this integration?')) {
-      await onDelete(id);
-    }
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
+
+  const handleEdit = (integration: Integration) => {
+    setEditingIntegration(integration);
+    setShowAddModal(true);
   };
 
-  if (!configuredIntegrations || configuredIntegrations.length === 0) {
-    return <div className="no-integrations">No integrations found</div>;
-  }
+  const handleModalClose = () => {
+    setShowAddModal(false);
+    setEditingIntegration(null);
+  };
+
+  const handleSave = (integration: Integration) => {
+    if (editingIntegration) {
+      onUpdateIntegration(integration);
+    } else {
+      onAddIntegration(integration);
+    }
+    handleModalClose();
+  };
 
   return (
-    <div className="integrations-list">
-      {configuredIntegrations.map(integration => {
-        console.log('Integration provider:', integration.provider);
-        return (
-          <div key={integration.id} className="integration-card">
-            <div className="integration-card-header">
-              <div className="integration-info">
-                <div className="integration-logo">
-                  <img 
-                    src={`/icons/${integration.provider}.svg`}
-                    alt={integration.name}
-                    className="integration-icon"
-                    onError={(e) => console.error('Failed to load icon:', e)}
-                  />
-                </div>
-                <div>
-                  <h3>{integration.name}</h3>
-                  <p>{integration.description}</p>
-                  <span className="integration-type">{integration.type}</span>
-                </div>
-              </div>
-              <div className="integration-actions">
-                <button className="edit-button">
-                  <PencilIcon className="h-5 w-5 mr-2" />
-                  Edit
-                </button>
-                <button 
-                  className="delete-button"
-                  onClick={() => integration.id && handleDelete(integration.id)}
-                >
-                  <TrashIcon className="h-5 w-5 mr-2" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="integrations-container">
+      <div className="integrations-section">
+        <h2>Connected Integrations</h2>
+        <div className="integrations-grid">
+          {integrations.map(integration => (
+            <IntegrationCard
+              key={integration.id}
+              integration={integration}
+              onEdit={() => onEdit(integration)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <AddIntegrationModal
+        isOpen={showAddModal}
+        onClose={handleModalClose}
+        onSave={handleSave}
+        integration={editingIntegration}
+      />
     </div>
   );
 };

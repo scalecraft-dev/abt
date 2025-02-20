@@ -12,6 +12,18 @@ import (
 	"github.com/tmc/langchaingo/prompts"
 )
 
+type LLMClient interface {
+	Complete(messages []Message, model string, temperature float64, maxTokens *int) (string, Usage, error)
+	GetChain(prompt string) (chains.Chain, error)
+	CreateEmbeddings(ctx context.Context, texts []string) ([][]float32, error)
+}
+
+type AnthropicClient struct {
+	config   LLMConfig
+	llm      *anthropic.LLM
+	embedder *LocalEmbedder
+}
+
 func NewLLMClient(config LLMConfig) (LLMClient, error) {
 	switch config.Provider {
 	case Anthropic:
@@ -22,9 +34,16 @@ func NewLLMClient(config LLMConfig) (LLMClient, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create LLM client: %v", err)
 		}
+
+		embedder, err := NewLocalEmbedder()
+		if err != nil {
+			return nil, err
+		}
+
 		return &AnthropicClient{
-			config: config,
-			llm:    llm,
+			config:   config,
+			llm:      llm,
+			embedder: embedder,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported LLM provider: %s", config.Provider)
@@ -67,6 +86,10 @@ func (c *AnthropicClient) GetChain(prompt string) (chains.Chain, error) {
 	chain := chains.NewLLMChain(c.llm, promptTemplate)
 
 	return chain, nil
+}
+
+func (c *AnthropicClient) CreateEmbeddings(ctx context.Context, texts []string) ([][]float32, error) {
+	return c.embedder.CreateEmbeddings(ctx, texts)
 }
 
 func HandleLLMComplete(llm LLMClient) gin.HandlerFunc {

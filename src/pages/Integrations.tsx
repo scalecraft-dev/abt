@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { api, Integration } from '../services/api';
 import IntegrationsList from '../components/integrations/IntegrationsList';
-import AddIntegrationModal from '../components/integrations/AddIntegrationModal';
+import IntegrationModal from '../components/integrations/IntegrationModal';
 import './Integrations.css';
 
 const Integrations: React.FC = () => {
-  const [isAddingIntegration, setIsAddingIntegration] = useState(false);
   const [availableIntegrations, setAvailableIntegrations] = useState<Integration[]>([]);
   const [configuredIntegrations, setConfiguredIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingIntegration, setEditingIntegration] = useState<Integration | undefined>(undefined);
 
   useEffect(() => {
     loadIntegrations();
@@ -27,14 +28,9 @@ const Integrations: React.FC = () => {
     }
   };
 
-  const handleAddIntegration = async () => {
-    try {
-      const available = await api.listAvailableIntegrations();
-      setAvailableIntegrations(available);
-      setIsAddingIntegration(true);
-    } catch (error) {
-      console.error('Failed to load available integrations:', error);
-    }
+  const handleAddIntegration = () => {
+    setEditingIntegration(undefined);
+    setModalOpen(true);
   };
 
   const handleConnect = async (provider: string) => {
@@ -49,7 +45,6 @@ const Integrations: React.FC = () => {
           const integration = configuredIntegrations.find(i => i.provider === provider);
           if (integration?.status === 'active') {
             clearInterval(checkInterval);
-            setIsAddingIntegration(false);
           }
         }, 1000);
       } catch (error) {
@@ -64,6 +59,17 @@ const Integrations: React.FC = () => {
       await loadIntegrations();
     } catch (error) {
       console.error('Failed to delete integration:', error);
+    }
+  };
+
+  const handleEdit = async (integration: Integration) => {
+    try {
+      // Fetch latest integration data
+      const updatedIntegration = await api.getIntegration(integration.id!);
+      setEditingIntegration(updatedIntegration);
+      setModalOpen(true);
+    } catch (error) {
+      console.error('Failed to fetch integration:', error);
     }
   };
 
@@ -84,21 +90,52 @@ const Integrations: React.FC = () => {
       ) : (
         <div className="integrations-list">
           <IntegrationsList
-            availableIntegrations={availableIntegrations}
-            configuredIntegrations={configuredIntegrations}
-            onDelete={handleDeleteIntegration}
+            integrations={configuredIntegrations}
+            onEdit={handleEdit}
+            onAddIntegration={async (integration) => {
+              await api.createIntegration({
+                ...integration,
+                config: integration.config || {}
+              });
+              loadIntegrations();
+            }}
+            onUpdateIntegration={async (integration) => {
+              if (integration.id) {
+                await api.updateIntegration(integration.id, {
+                  ...integration,
+                  config: integration.config || {}
+                });
+                loadIntegrations();
+              }
+            }}
           />
         </div>
       )}
 
-      {isAddingIntegration && (
-        <AddIntegrationModal
-          onClose={() => {
-            setIsAddingIntegration(false);
-            loadIntegrations();
-          }}
-        />
-      )}
+      <IntegrationModal
+        isOpen={modalOpen}
+        integration={editingIntegration}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingIntegration(undefined);
+          loadIntegrations();
+        }}
+        onSave={async (integration) => {
+          const config = {
+            ...integration,
+            config: integration.config || {}
+          };
+          
+          if (editingIntegration) {
+            await api.updateIntegration(integration.id!, config);
+          } else {
+            await api.createIntegration(config);
+          }
+          loadIntegrations();
+          setModalOpen(false);
+          setEditingIntegration(undefined);
+        }}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { Agent, AgentFormData } from '../types/agent';
 import { Workflow } from '../types/workflow';
 import { Integration, IntegrationConfig, SnowflakeConfig } from '../types/integration';
 
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+export const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 const fetchApi = async (endpoint: string, options?: RequestInit) => {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -36,7 +36,6 @@ export type { Integration, IntegrationConfig, SnowflakeConfig };
 export const api = {
   async listAgents(): Promise<Agent[]> {
     const response = await fetchApi('/agents/');
-    console.log('Server response:', response);
     return response.map((agent: any) => ({
       ...agent,
       avatar: agent.config.avatar || {
@@ -104,8 +103,6 @@ export const api = {
       }
     };
 
-    console.log('Creating agent with data:', agent);
-
     const response = await fetchApi('/agents/', {
       method: 'POST',
       body: JSON.stringify(agent)
@@ -130,7 +127,6 @@ export const api = {
   async listWorkflows(): Promise<Workflow[]> {
     try {
       const response = await fetchApi('/workflows/');
-      console.log('Server response:', response);
       return response.map((workflow: any) => ({
         ...workflow,
         createdAt: new Date(workflow.created_at).toISOString(),
@@ -245,5 +241,41 @@ export const api = {
 
   async listAvailableIntegrations(): Promise<Integration[]> {
     return await fetchApi('/integrations/available');
-  }
+  },
+
+  updateIntegration: async (id: string, integration: IntegrationConfig): Promise<Integration> => {
+    const response = await fetch(`${API_BASE_URL}/integrations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(integration)
+    });
+    return response.json();
+  },
+
+  async getIntegration(id: string): Promise<Integration> {
+    return await fetchApi(`/integrations/${id}`);
+  },
+
+  async testIntegration(config: { provider: string; endpoint: string; config: Record<string, any> }): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/integrations/${config.endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config.config)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Connection test failed');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Connection test failed');
+    }
+  },
 }; 

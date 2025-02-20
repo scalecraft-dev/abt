@@ -202,40 +202,55 @@ func ChatWithAgent(db *sql.DB, llmClient LLMClient) gin.HandlerFunc {
 			return
 		}
 
-		// For LLM type agents, use the LLM client
-		if agent.Type == TypeLLM {
-			// Create a LangChain prompt template
-			promptTemplate := fmt.Sprintf(`You are serving as an agent named %s.
-				Your description is: %s
-				Your narrative is: %s
-				
-				Respond to the following message: {input}`,
-				agent.Name,
-				agent.Description,
-				agent.Narrative,
-			)
+		// Initialize RAG retriever
+		retriever := NewSnowflakeRetriever(
+			db,
+			"agent_documents",
+			"local", // Using our local embedder
+			llmClient,
+			1536, // OpenAI embedding dimension
+		)
 
-			// Get LangChain chain
-			chain, err := llmClient.GetChain(promptTemplate)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chain"})
-				return
-			}
-
-			// Run the chain
-			result, err := chain.Call(context.Background(), map[string]any{
-				"input": req.Message,
-			})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get LLM response"})
-				return
-			}
-
-			c.JSON(http.StatusOK, gin.H{"response": result["text"]})
+		// Get relevant documents for the question
+		docs, err := retriever.FindSimilar(context.Background(), req.Message, 3)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		// For other agent types, return not implemented
-		c.JSON(http.StatusNotImplemented, gin.H{"error": "Chat not implemented for this agent type"})
+		// Build context-enhanced prompt
+		contextPrompt := buildRAGPrompt(req.Message, docs)
+		messages := []Message{
+			{Role: "system", Content: contextPrompt},
+			{Role: "user", Content: req.Message},
+		}
+
+		// Get response using enhanced context
+		model := agent.Config["model"].(string)
+		temperature := agent.Config["temperature"].(float64)
+		maxTokens := int(agent.Config["max_tokens"].(float64))
+
+		response, _, err := llmClient.Complete(messages, model, temperature, &maxTokens)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get LLM response"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"response": response})
 	}
+}
+
+func buildRAGPrompt(question string, docs []Document) string {
+	var context string
+	for _, doc := range docs {
+		context += fmt.Sprintf("\nDocument: %s\n%s\n", doc.ID, doc.Content)
+	}
+
+	return fmt.Sprintf(`You are a helpful AI assistant. Use the following documents as context to answer the user's question.
+If the context doesn't contain relevant information, say so.
+
+Context:
+%s
+
+Answer the question based on the context above.`, context)
 }

@@ -3,15 +3,25 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/scalecraft/abt/internal"
 )
 
+func init() {
+	// Load environment variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file:", err)
+	}
+}
+
 func main() {
-	// Disable Snowflake OCSP validation
+	// Set required env vars
 	os.Setenv("SNOWFLAKE_OCSP", "INSECURE_SKIP_VERIFY")
 
 	// Load configuration
@@ -28,7 +38,7 @@ func main() {
 	defer db.Close()
 
 	// Run migrations
-	if err := internal.RunMigrations(db, "migrations"); err != nil {
+	if err := internal.RunMigrations(db, "migrations/postgres"); err != nil {
 		log.Fatal("Failed to run migrations:", err)
 	}
 
@@ -41,6 +51,16 @@ func main() {
 	// Create a new Gin router with default middleware
 	r := gin.Default()
 
+	// Add static file serving
+	r.Static("/api/v1/icons", "./public/icons")
+	r.Use(func(c *gin.Context) {
+		if strings.HasSuffix(c.Request.URL.Path, ".svg") {
+			c.Writer.Header().Set("Content-Type", "image/svg+xml")
+			c.Writer.Header().Set("Cache-Control", "public, max-age=31536000")
+		}
+		c.Next()
+	})
+
 	// CORS middleware
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:3000"},
@@ -50,8 +70,11 @@ func main() {
 			"Cache-Control",
 			"Pragma",
 			"Expires",
+			"Accept",
+			"Accept-Encoding",
+			"Accept-Language",
 		},
-		ExposeHeaders:    []string{"Content-Length"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))

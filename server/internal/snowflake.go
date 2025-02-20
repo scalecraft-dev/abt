@@ -1,15 +1,14 @@
-package integrations
+package internal
 
 import (
-	"crypto/x509"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/snowflakedb/gosnowflake"
 )
 
 type SnowflakeConfig struct {
@@ -19,30 +18,6 @@ type SnowflakeConfig struct {
 	Database  string `json:"database"`
 	Schema    string `json:"schema"`
 	Warehouse string `json:"warehouse"`
-}
-
-func init() {
-	// Create certs directory if it doesn't exist
-	certsDir := filepath.Join(".", "certs")
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
-		return
-	}
-
-	// Set the certificate path for Snowflake
-	certPath := filepath.Join(certsDir, "snowflake.pem")
-	os.Setenv("SNOWFLAKE_OCSP_RESPONSE_CACHE_DIR", certsDir)
-
-	// If cert doesn't exist, use system certs
-	if _, err := os.Stat(certPath); os.IsNotExist(err) {
-		systemPool, err := x509.SystemCertPool()
-		if err != nil {
-			return
-		}
-		// Write system certs to file
-		if systemPool != nil {
-			return
-		}
-	}
 }
 
 func ConnectSnowflake(db *sql.DB) gin.HandlerFunc {
@@ -149,6 +124,7 @@ func TestSnowflake(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var config SnowflakeConfig
 		if err := c.ShouldBindJSON(&config); err != nil {
+			fmt.Println("Error binding JSON:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid configuration"})
 			return
 		}
@@ -166,17 +142,20 @@ func TestSnowflake(db *sql.DB) gin.HandlerFunc {
 }
 
 func connectToSnowflake(config SnowflakeConfig) (*sql.DB, error) {
-	dsn := fmt.Sprintf("%s://%s:%s@%s.snowflakecomputing.com/%s/%s?warehouse=%s",
-		"snowflake",
-		config.Username,
-		config.Password,
-		config.Account,
-		config.Database,
-		config.Schema,
-		config.Warehouse,
-	)
+	snowflakeConfig := gosnowflake.Config{
+		Account:   parseAccountIdentifier(config.Account),
+		User:      config.Username,
+		Password:  config.Password,
+		Database:  config.Database,
+		Schema:    config.Schema,
+		Warehouse: config.Warehouse,
+	}
+	connString, err := gosnowflake.DSN(&snowflakeConfig)
+	if err != nil {
+		return nil, err
+	}
 
-	db, err := sql.Open("snowflake", dsn)
+	db, err := sql.Open("snowflake", connString)
 	if err != nil {
 		return nil, err
 	}
@@ -256,4 +235,12 @@ func processQueryResults(rows *sql.Rows) ([]map[string]interface{}, error) {
 	}
 
 	return results, rows.Err()
+}
+
+func parseAccountIdentifier(fullAccount string) string {
+	// Remove .snowflakecomputing.com if present
+	if idx := strings.Index(fullAccount, ".snowflakecomputing.com"); idx != -1 {
+		return fullAccount[:idx]
+	}
+	return fullAccount
 }

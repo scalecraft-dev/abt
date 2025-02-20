@@ -2,9 +2,6 @@ package internal
 
 import (
 	"time"
-
-	"github.com/tmc/langchaingo/chains"
-	"github.com/tmc/langchaingo/llms/anthropic"
 )
 
 type WorkflowStatus string
@@ -39,20 +36,10 @@ type Agent struct {
 	Config      map[string]interface{} `json:"config"`
 }
 
-type LLMClient interface {
-	Complete(messages []Message, model string, temperature float64, maxTokens *int) (string, Usage, error)
-	GetChain(prompt string) (chains.Chain, error)
-}
-
 type Usage struct {
 	InputTokens  int `json:"input_tokens"`
 	OutputTokens int `json:"output_tokens"`
 	TotalTokens  int `json:"total_tokens"`
-}
-
-type AnthropicClient struct {
-	config LLMConfig
-	llm    *anthropic.LLM
 }
 
 type Message struct {

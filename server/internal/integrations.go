@@ -70,9 +70,40 @@ func ListIntegrations(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+func GetIntegration(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var integration Integration
+		var configJSON []byte
+
+		err := db.QueryRow(`
+			SELECT id, name, provider, type, description, config
+			FROM integrations WHERE id = $1`,
+			id,
+		).Scan(&integration.ID, &integration.Name, &integration.Provider, &integration.Type,
+			&integration.Description, &configJSON)
+
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Integration not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch integration"})
+			return
+		}
+
+		if err := json.Unmarshal(configJSON, &integration.Config); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse config"})
+			return
+		}
+
+		c.JSON(http.StatusOK, integration)
+	}
+}
+
 func UpdateIntegration(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		provider := c.Param("id")
+		id := c.Param("id")
 		var integration Integration
 		if err := c.ShouldBindJSON(&integration); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid integration data"})
@@ -89,8 +120,8 @@ func UpdateIntegration(db *sql.DB) gin.HandlerFunc {
 		result, err := db.Exec(`
 			UPDATE integrations 	
 			SET name = $1, type = $2, provider = $3, description = $4, config = $5
-			WHERE provider = $6`,
-			integration.Name, integration.Type, integration.Provider, integration.Description, configJSON, provider,
+			WHERE id = $6`,
+			integration.Name, integration.Type, integration.Provider, integration.Description, configJSON, id,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update integration"})
@@ -107,7 +138,7 @@ func UpdateIntegration(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		integration.Provider = provider
+		integration.Provider = id
 		c.JSON(http.StatusOK, integration)
 	}
 }
