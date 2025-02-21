@@ -602,4 +602,14 @@
 
 .chat-button:hover {
   background-color: var(--primary-hover);
+}
+
+.form-checkbox {
+  margin-right: 8px;
+}
+
+.form-help-text {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 4px;
 } 

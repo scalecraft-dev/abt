@@ -133,16 +133,23 @@ const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
           type="button"
           onClick={testConnection}
           disabled={isTesting}
-          className="integration-form-button secondary"
+          className="test-button"
         >
           {isTesting ? 'Testing...' : 'Test Connection'}
         </button>
         <button
           type="submit"
           disabled={isConnecting}
-          className="integration-form-button"
+          className="create-button"
         >
           {isConnecting ? 'Saving...' : 'Save Connection'}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="cancel-button"
+        >
+          Cancel
         </button>
       </div>
     </form>

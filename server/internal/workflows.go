@@ -5,9 +5,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+const (
+	StatusInactive WorkflowStatus = "inactive"
+	StatusActive   WorkflowStatus = "active"
+)
+
+type WorkflowStatus string
+
+type Workflow struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Status      WorkflowStatus `json:"status"`
+	Dag         Dag            `json:"dag"`
+	Schedule    string         `json:"schedule"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type Dag struct {
+	Nodes []Node `json:"nodes"`
+	Edges []Edge `json:"edges"`
+}
+
+type Node interface{}
+
+type Edge interface{}
 
 func ListWorkflows(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

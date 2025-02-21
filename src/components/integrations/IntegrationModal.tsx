@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { Integration, API_BASE_URL, api } from '../../services/api';
+import SnowflakeConfig from './SnowflakeConfig';
 
 interface IntegrationModalProps {
   isOpen: boolean;
@@ -69,119 +70,29 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
 
   const renderIntegrationForm = () => (
     <div className="modal-content">
-      <div className="form-group">
-        <label className="form-label">Name</label>
-        <input
-          type="text"
-          className="form-input"
-          value={formData.name}
-          onChange={e => setFormData({...formData, name: e.target.value})}
-        />
-      </div>
-      <div className="form-group">
-        <label className="form-label">Description</label>
-        <textarea
-          className="form-input"
-          value={formData.description}
-          onChange={e => setFormData({...formData, description: e.target.value})}
-        />
-      </div>
-      {formData.provider === 'snowflake' && (
+      {!selectedIntegration ? (
         <>
           <div className="form-group">
-            <label className="form-label">Account</label>
+            <label className="form-label">Name</label>
             <input
               type="text"
               className="form-input"
-              value={formData.config?.account || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, account: e.target.value }
-              })}
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Username</label>
-            <input
-              type="text"
+            <label className="form-label">Description</label>
+            <textarea
               className="form-input"
-              value={formData.config?.username || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, username: e.target.value }
-              })}
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
             />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={formData.config?.password || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, password: e.target.value }
-              })}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Database</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.config?.database || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, database: e.target.value }
-              })}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Schema</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.config?.schema || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, schema: e.target.value }
-              })}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Warehouse</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.config?.warehouse || ''}
-              onChange={e => setFormData({
-                ...formData,
-                config: { ...formData.config, warehouse: e.target.value }
-              })}
-            />
-          </div>
-          <div className="modal-footer">
-            <div className="modal-footer-left">
-              <button
-                type="button"
-                onClick={handleTestConnection}
-                disabled={isTesting}
-                className="test-button"
-              >
-                {isTesting ? 'Testing...' : 'Test Connection'}
-              </button>
-            </div>
-            <div className="modal-footer-right">
-              <button className="cancel-button" onClick={onClose}>
-                Cancel
-              </button>
-              <button className="update-button" onClick={handleSubmit}>
-                {integration ? 'Update' : 'Save'}
-              </button>
-            </div>
           </div>
         </>
-      )}
+      ) : formData.provider === 'snowflake' ? (
+        <SnowflakeConfig onClose={onClose} />
+      ) : null}
     </div>
   );
 

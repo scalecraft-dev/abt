@@ -5,10 +5,11 @@ export interface AgentAvatar {
   value: string; // emoji character or image URL
 }
 
-export interface LLMConfig {
+export interface Config {
   model: string;
   temperature: number;
   max_tokens?: number;
+  use_rag?: boolean;
 }
 
 export interface Agent {
@@ -21,7 +22,7 @@ export interface Agent {
     type: AvatarType;
     value: string;
   };
-  llmConfig: LLMConfig;
+  config: Config;
   status: 'idle' | 'busy' | 'error';
   capabilities: string[];
   createdAt: string;
@@ -34,5 +35,5 @@ export interface AgentFormData {
   narrative: string;
   avatarType: AvatarType;
   avatarValue: string;
-  llmConfig: LLMConfig;
+  config: Config;
 } 

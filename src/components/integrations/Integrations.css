@@ -278,3 +278,43 @@
 .delete-button:hover {
   background-color: #fecaca;
 }
+
+.create-button {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.create-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.create-button:disabled {
+  background-color: var(--neutral-400);
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  padding: 0.625rem 1.25rem;
+  background-color: white;
+  color: var(--neutral-700);
+  border: 1px solid var(--neutral-300);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: var(--neutral-50);
+  border-color: var(--neutral-400);
+}
+

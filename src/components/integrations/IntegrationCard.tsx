@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Integration, API_BASE_URL } from '../../services/api';
+import { Integration, API_BASE_URL, api } from '../../services/api';
 import './IntegrationCard.css';
 
 interface IntegrationCardProps {
@@ -17,11 +17,26 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
   onEdit,
   onDelete
 }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
   const [iconLoaded, setIconLoaded] = useState(false);
   const isConnected = integration.status === 'active';
   const iconUrl = `${API_BASE_URL}/icons/${integration.provider}.svg`;
-  const handleEditClick = (e: React.MouseEvent, integration: Integration) => {
-    onEdit?.(integration);
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this integration?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await api.deleteIntegration(integration.id as string);
+      onDelete?.(integration);
+    } catch (error) {
+      console.error('Failed to delete integration:', error);
+      alert('Failed to delete integration');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -40,15 +55,16 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
       <div className="integration-actions">
         <button
           className="edit-button"
-          onClick={(e) => handleEditClick(e, integration)}
+          onClick={(e) => onEdit?.(integration)}
         >
           Edit
         </button>
         <button
           className="delete-button"
-          onClick={() => onDelete?.(integration)}
+          onClick={handleDelete}
+          disabled={isDeleting}
         >
-          Delete
+          {isDeleting ? 'Deleting...' : 'Delete'}
         </button>
       </div>
     </div>

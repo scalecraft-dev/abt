@@ -43,10 +43,11 @@ export const api = {
         value: '🤖'  // Default avatar
       },
       narrative: agent.narrative,
-      llmConfig: {
+      config: {
         model: agent.config.model,
         temperature: agent.config.temperature,
-        max_tokens: agent.config.max_tokens
+        max_tokens: agent.config.max_tokens,
+        use_rag: agent.config.use_rag || false  // Add default value
       },
       status: agent.status || 'idle',
       capabilities: agent.capabilities || [],
@@ -97,9 +98,10 @@ export const api = {
           type: formData.avatarType,
           value: formData.avatarValue
         },
-        model: formData.llmConfig.model,
-        temperature: formData.llmConfig.temperature,
-        max_tokens: formData.llmConfig.max_tokens
+        model: formData.config.model,
+        temperature: formData.config.temperature,
+        max_tokens: formData.config.max_tokens,
+        use_rag: formData.config.use_rag
       }
     };
 
@@ -112,10 +114,11 @@ export const api = {
       ...response,
       avatar: response.config.avatar,
       narrative: response.narrative,
-      llmConfig: {
+      config: {
         model: response.config.model,
         temperature: response.config.temperature,
-        max_tokens: response.config.max_tokens
+        max_tokens: response.config.max_tokens,
+        use_rag: response.config.use_rag
       },
       status: response.status || 'idle',
       capabilities: response.capabilities || [],
@@ -201,6 +204,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(agent)
     });
+    console.log("Agent updated with following data: ", agent);
     return response.json();
   },
 
@@ -277,5 +281,11 @@ export const api = {
       }
       throw new Error('Connection test failed');
     }
+  },
+
+  deleteAgent: async (id: string): Promise<void> => {
+    await fetchApi(`/agents/${id}`, {
+      method: 'DELETE',
+    });
   },
 }; 

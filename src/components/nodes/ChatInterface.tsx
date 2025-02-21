@@ -18,6 +18,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ agent, onClose }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -31,6 +32,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ agent, onClose }) => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
+    setError(null);
 
     try {
       const response = await api.chat(agent, userMessage.content);
@@ -42,9 +44,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ agent, onClose }) => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Failed to get response:', error);
-      // Optionally show error message to user
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get response';
+      setError(errorMessage);
+      console.error('Chat error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +86,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ agent, onClose }) => {
             <div className="message-content loading">...</div>
           </div>
         )}
+        {error && (
+          <div className="message error">
+            Error: {error}
+          </div>
+        )}
       </div>
 
       <div className="chat-input">
@@ -98,7 +106,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ agent, onClose }) => {
           onClick={handleSendMessage}
           disabled={isLoading || !inputMessage.trim()}
         >
-          Send
+          {isLoading ? 'Sending...' : 'Send'}
         </button>
       </div>
     </div>

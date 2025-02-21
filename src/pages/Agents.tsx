@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addAgent, updateAgent, removeAgent } from '../store/agentSlice';
-import { Agent, AvatarType, LLMConfig } from '../types/agent';
+import { Agent, AvatarType, Config } from '../types/agent';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import './Agents.css';
 import { api } from '../services/api';
@@ -14,7 +14,7 @@ interface AgentFormData {
   narrative: string;
   avatarType: AvatarType;
   avatarValue: string;
-  llmConfig: LLMConfig;
+  config: Config;
 }
 
 const DEFAULT_EMOJI = '🤖';
@@ -32,10 +32,11 @@ const AgentForm: React.FC<{
       narrative: '',
       avatarType: 'emoji',
       avatarValue: DEFAULT_EMOJI,
-      llmConfig: {
+      config: {
         model: 'claude-3-opus-20240229',
         temperature: 0.7,
-        max_tokens: 1024
+        max_tokens: 1024,
+        use_rag: false
       }
     }
   );
@@ -166,10 +167,10 @@ const AgentForm: React.FC<{
         <label>LLM Configuration:</label>
         <div className="llm-config">
           <select
-            value={formData.llmConfig.model}
+            value={formData.config.model}
             onChange={(e) => setFormData(prev => ({
               ...prev,
-              llmConfig: { ...prev.llmConfig, model: e.target.value }
+              config: { ...prev.config, model: e.target.value }
             }))}
           >
             <option value="">Select a model</option>
@@ -182,13 +183,33 @@ const AgentForm: React.FC<{
             min="0"
             max="2"
             step="0.1"
-            value={formData.llmConfig.temperature}
+            value={formData.config.temperature}
             onChange={(e) => setFormData(prev => ({
               ...prev,
-              llmConfig: { ...prev.llmConfig, temperature: parseFloat(e.target.value) }
+              config: { ...prev.config, temperature: parseFloat(e.target.value) }
             }))}
             placeholder="Temperature"
           />
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label">
+          <input
+            type="checkbox"
+            checked={formData.config.use_rag}
+            onChange={(e) => setFormData({
+              ...formData,
+              config: {
+                ...formData.config,
+                use_rag: e.target.checked
+              }
+            })}
+            className="form-checkbox"
+          />
+          Enable RAG (Retrieval Augmented Generation)
+        </label>
+        <div className="form-help-text">
+          When enabled, the agent will use document retrieval to enhance its responses
         </div>
       </div>
       <div className="modal-actions">
@@ -252,7 +273,7 @@ const Agents: React.FC = () => {
           type: formData.avatarType,
           value: formData.avatarValue
         },
-        llmConfig: formData.llmConfig,
+        config: formData.config,
         updatedAt: new Date().toISOString()
       };
 
@@ -268,9 +289,17 @@ const Agents: React.FC = () => {
     }
   };
 
-  const handleDeleteAgent = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this agent?')) {
+  const handleDeleteAgent = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this agent?')) {
+      return;
+    }
+
+    try {
+      await api.deleteAgent(id);
       dispatch(removeAgent(id));
+    } catch (error) {
+      console.error('Failed to delete agent:', error);
+      alert('Failed to delete agent. Please try again.');
     }
   };
 
@@ -307,10 +336,11 @@ const Agents: React.FC = () => {
               narrative: editingAgent.narrative || '',
               avatarType: editingAgent.avatar.type,
               avatarValue: editingAgent.avatar.value,
-              llmConfig: {
-                model: editingAgent.llmConfig.model,
-                temperature: editingAgent.llmConfig.temperature,
-                max_tokens: editingAgent.llmConfig.max_tokens
+              config: {
+                model: editingAgent.config.model,
+                temperature: editingAgent.config.temperature,
+                max_tokens: editingAgent.config.max_tokens,
+                use_rag: editingAgent.config.use_rag
               }
             } : undefined}
             onSubmit={isCreating ? handleCreateAgent : handleUpdateAgent}

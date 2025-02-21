@@ -7,22 +7,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type LLMProvider string
-
-const (
-	Anthropic LLMProvider = "anthropic"
-	// Add other providers as needed
-)
-
-type LLMConfig struct {
-	Provider    LLMProvider `json:"provider"`
-	APIKey      string      `json:"api_key"`
-	BaseURL     string      `json:"base_url"`
-	Model       string      `json:"model"`
-	MaxTokens   int         `json:"max_tokens"`
-	Temperature float64     `json:"temperature"`
-}
-
 type Config struct {
 	DB  DBConfig
 	LLM LLMConfig
@@ -42,11 +26,12 @@ func LoadConfig() (*Config, error) {
 		APIKey:      getEnv("LLM_API_KEY", ""),
 		BaseURL:     getEnv("LLM_BASE_URL", "https://api.anthropic.com"),
 		Model:       getEnv("LLM_MODEL", "claude-3-sonnet-20240229"),
+		AWSRegion:   getEnv("AWS_REGION", "us-east-1"),
 		MaxTokens:   4096, // Default max tokens
 		Temperature: 0.7,  // Default temperature
 	}
 
-	if llmConfig.APIKey == "" {
+	if llmConfig.APIKey == "" && llmConfig.Provider == Anthropic {
 		return nil, fmt.Errorf("LLM_API_KEY environment variable is required")
 	}
 

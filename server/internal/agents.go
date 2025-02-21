@@ -11,6 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	TypeLLM      AgentType = "llm"
+	TypeCustom   AgentType = "custom"
+	TypeFunction AgentType = "function"
+)
+
+type AgentType string
+type Agent struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Type        AgentType              `json:"type"`
+	Description string                 `json:"description"`
+	Narrative   string                 `json:"narrative"`
+	Config      map[string]interface{} `json:"config"`
+}
+
 func ListAgents(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rows, err := db.Query(`
@@ -49,6 +65,11 @@ func CreateAgent(db *sql.DB) gin.HandlerFunc {
 			log.Printf("Failed to bind JSON: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
+		}
+
+		// Ensure use_rag is present in config
+		if _, exists := agent.Config["use_rag"]; !exists {
+			agent.Config["use_rag"] = false
 		}
 
 		configJSON, err := json.Marshal(agent.Config)
@@ -202,40 +223,47 @@ func ChatWithAgent(db *sql.DB, llmClient LLMClient) gin.HandlerFunc {
 			return
 		}
 
-		// Initialize RAG retriever
-		retriever := NewSnowflakeRetriever(
-			db,
-			"agent_documents",
-			"local", // Using our local embedder
-			llmClient,
-			1536, // OpenAI embedding dimension
-		)
+		var contextPrompt string
+		// Only perform RAG if useRAG is true in agent config
+		if agent.Config["use_rag"].(bool) {
+			// Initialize RAG retriever
+			retriever := NewSnowflakeRetriever(
+				db,
+				"agent_documents",
+				"local",
+				llmClient,
+				1536,
+			)
 
-		// Get relevant documents for the question
-		docs, err := retriever.FindSimilar(context.Background(), req.Message, 3)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			// Get relevant documents for the question
+			docs, err := retriever.FindSimilar(context.Background(), req.Message, 3)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			contextPrompt = buildRAGPrompt(req.Message, docs)
+		} else {
+			// Use the agent's narrative as the only context
+			contextPrompt = agent.Narrative
 		}
 
-		// Build context-enhanced prompt
-		contextPrompt := buildRAGPrompt(req.Message, docs)
 		messages := []Message{
-			{Role: "system", Content: contextPrompt},
-			{Role: "user", Content: req.Message},
+			{Role: "user", Content: fmt.Sprintf("You are an AI assistant with this context:\n\n%s\n\nUser question: %s", contextPrompt, req.Message)},
 		}
 
-		// Get response using enhanced context
+		// Get response using the context
 		model := agent.Config["model"].(string)
+		model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 		temperature := agent.Config["temperature"].(float64)
 		maxTokens := int(agent.Config["max_tokens"].(float64))
 
 		response, _, err := llmClient.Complete(messages, model, temperature, &maxTokens)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get LLM response"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
+		fmt.Println("response: ", response)
 		c.JSON(http.StatusOK, gin.H{"response": response})
 	}
 }
