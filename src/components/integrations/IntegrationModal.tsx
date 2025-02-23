@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { Integration, API_BASE_URL, api } from '../../services/api';
 import SnowflakeConfig from './SnowflakeConfig';
+import './IntegrationModal.css';
+import { SnowflakeConfig as SnowflakeConfigType } from '../../types/integration';
 
 interface IntegrationModalProps {
   isOpen: boolean;
@@ -29,12 +31,28 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
 
   useEffect(() => {
     if (integration) {
-      setFormData(integration);
+      setFormData({
+        id: integration.id,
+        name: integration.name,
+        type: integration.type,
+        description: integration.description,
+        provider: integration.provider,
+        status: integration.status,
+        config: integration.config
+      });
       setSelectedIntegration(integration.provider);
     } else {
+      setFormData({
+        name: '',
+        type: '',
+        description: '',
+        provider: '',
+        status: 'disconnected',
+        config: {}
+      });
       setSelectedIntegration(null);
     }
-  }, [integration, isOpen]);
+  }, [integration]);
 
   const handleSubmit = () => {
     onSave(formData);
@@ -90,8 +108,12 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
             />
           </div>
         </>
-      ) : formData.provider === 'snowflake' ? (
-        <SnowflakeConfig onClose={onClose} />
+      ) : selectedIntegration === 'snowflake' ? (
+        <SnowflakeConfig
+          formData={formData}
+          setFormData={setFormData}
+          onClose={onClose}
+        />
       ) : null}
     </div>
   );
@@ -109,9 +131,9 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
             });
           }}
           className="integration-option"
+          data-name="Snowflake"
         >
           <img src={`${API_BASE_URL}/icons/snowflake.svg`} alt="Snowflake" className="integration-icon" />
-          <span className="integration-name">Snowflake</span>
         </button>
         <button
           onClick={() => {
@@ -123,9 +145,9 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
             });
           }}
           className="integration-option"
+          data-name="Google Drive"
         >
           <img src={`${API_BASE_URL}/icons/google-drive.svg`} alt="Google Drive" className="integration-icon" />
-          <span className="integration-name">Google Drive</span>
         </button>
       </div>
     </div>
@@ -138,7 +160,31 @@ const IntegrationModal: React.FC<IntegrationModalProps> = ({
           {integration ? 'Edit Integration' : 'Add Integration'}
         </h2>
       </div>
-      {(selectedIntegration || integration) ? renderIntegrationForm() : renderIntegrationSelect()}
+      {selectedIntegration === 'snowflake' ? (
+        <SnowflakeConfig
+          formData={formData}
+          setFormData={setFormData}
+          onClose={onClose}
+        />
+      ) : (
+        <div className="integration-grid">
+          <button
+            onClick={() => {
+              setSelectedIntegration('snowflake');
+              setFormData({
+                ...formData,
+                provider: 'snowflake',
+                type: 'database'
+              });
+            }}
+            className="integration-option"
+            data-name="Snowflake"
+          >
+            <img src={`${API_BASE_URL}/icons/snowflake.svg`} alt="Snowflake" className="integration-icon" />
+          </button>
+          {/* Other integration options */}
+        </div>
+      )}
     </Modal>
   );
 };

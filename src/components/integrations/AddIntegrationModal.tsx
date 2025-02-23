@@ -81,7 +81,13 @@ const AddIntegrationModal: React.FC<AddIntegrationModalProps> = ({
               >
                 <span className="mr-1">←</span> Back to integrations
               </button>
-              {selectedIntegration === 'snowflake' && <SnowflakeConfig onClose={onClose} />}
+              {selectedIntegration === 'snowflake' && (
+                <SnowflakeConfig 
+                  formData={formData}
+                  setFormData={setFormData}
+                  onClose={onClose}
+                />
+              )}
             </div>
           )}
         </div>

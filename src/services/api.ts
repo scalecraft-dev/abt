@@ -47,7 +47,8 @@ export const api = {
         model: agent.config.model,
         temperature: agent.config.temperature,
         max_tokens: agent.config.max_tokens,
-        use_rag: agent.config.use_rag || false  // Add default value
+        use_rag: agent.config.use_rag || false,
+        use_direct_query: agent.config.use_direct_query || false
       },
       status: agent.status || 'idle',
       capabilities: agent.capabilities || [],
@@ -98,10 +99,11 @@ export const api = {
           type: formData.avatarType,
           value: formData.avatarValue
         },
-        model: formData.config.model,
-        temperature: formData.config.temperature,
-        max_tokens: formData.config.max_tokens,
-        use_rag: formData.config.use_rag
+        model: formData.config?.model || 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+        temperature: formData.config?.temperature || 0.7,
+        max_tokens: formData.config?.max_tokens || 1024,
+        use_rag: formData.config?.use_rag || false,
+        use_direct_query: formData.config?.use_direct_query || false
       }
     };
 
@@ -118,7 +120,8 @@ export const api = {
         model: response.config.model,
         temperature: response.config.temperature,
         max_tokens: response.config.max_tokens,
-        use_rag: response.config.use_rag
+        use_rag: response.config.use_rag,
+        use_direct_query: response.config.use_direct_query
       },
       status: response.status || 'idle',
       capabilities: response.capabilities || [],

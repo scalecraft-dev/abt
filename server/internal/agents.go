@@ -1,12 +1,12 @@
 package internal
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +25,12 @@ type Agent struct {
 	Description string                 `json:"description"`
 	Narrative   string                 `json:"narrative"`
 	Config      map[string]interface{} `json:"config"`
+}
+
+// Add this struct to store chat history
+type ChatSession struct {
+	AgentID  string    `json:"agent_id"`
+	Messages []Message `json:"messages"`
 }
 
 func ListAgents(db *sql.DB) gin.HandlerFunc {
@@ -139,9 +145,9 @@ func UpdateAgent(db *sql.DB) gin.HandlerFunc {
 
 		result, err := db.Exec(`
 			UPDATE agents 
-			SET name = $1, type = $2, description = $3, config = $4
-			WHERE id = $5`,
-			agent.Name, agent.Type, agent.Description, configJSON, id,
+			SET name = $1, type = $2, description = $3, narrative = $4, config = $5
+			WHERE id = $6`,
+			agent.Name, agent.Type, agent.Description, agent.Narrative, configJSON, id,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update agent"})
@@ -189,81 +195,124 @@ func ChatWithAgent(db *sql.DB, llmClient LLMClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		// Get the agent first
+		// Get the agent
 		var agent Agent
 		var configJSON []byte
-
-		err := db.QueryRow(`
-			SELECT id, name, type, description, narrative, config 
-			FROM agents WHERE id = $1`,
-			id,
-		).Scan(&agent.ID, &agent.Name, &agent.Type, &agent.Description, &agent.Narrative, &configJSON)
-
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
-			return
-		}
+		err := db.QueryRow(`SELECT id, name, type, description, narrative, config FROM agents WHERE id = $1`, id).
+			Scan(&agent.ID, &agent.Name, &agent.Type, &agent.Description, &agent.Narrative, &configJSON)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch agent"})
 			return
 		}
 
+		// Parse config JSON
 		if err := json.Unmarshal(configJSON, &agent.Config); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse agent config"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to parse agent config: %v", err)})
 			return
 		}
 
-		// Get the chat message from request
+		// Get chat request
 		var req struct {
-			Message string                 `json:"message" binding:"required"`
-			Inputs  map[string]interface{} `json:"inputs,omitempty"`
+			Message string `json:"message" binding:"required"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		var contextPrompt string
-		// Only perform RAG if useRAG is true in agent config
-		if agent.Config["use_rag"].(bool) {
-			// Initialize RAG retriever
-			retriever := NewSnowflakeRetriever(
-				db,
-				"agent_documents",
-				"local",
-				llmClient,
-				1536,
-			)
+		// Get or initialize chat history
+		var historyJSON []byte
+		err = db.QueryRow(`
+			SELECT messages FROM chat_history 
+			WHERE agent_id = $1 AND user_id = $2
+			ORDER BY created_at DESC LIMIT 1`,
+			id, "current_user",
+		).Scan(&historyJSON)
 
-			// Get relevant documents for the question
-			docs, err := retriever.FindSimilar(context.Background(), req.Message, 3)
+		var history []Message
+		if err == nil {
+			if err := json.Unmarshal(historyJSON, &history); err != nil {
+				log.Printf("Failed to unmarshal chat history: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse chat history"})
+				return
+			}
+		} else if err != sql.ErrNoRows {
+			log.Printf("Failed to fetch chat history: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chat history"})
+			return
+		}
+
+		// Add narrative and context to system message
+		var contextPrompt string
+		var userMessage *Message
+		if useDirectQuery, ok := agent.Config["use_direct_query"].(bool); ok && useDirectQuery {
+			patientInfo, err := extractPatientInfo(req.Message, llmClient)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to parse patient info: %v", err)})
 				return
 			}
 
-			contextPrompt = buildRAGPrompt(req.Message, docs)
-		} else {
-			// Use the agent's narrative as the only context
-			contextPrompt = agent.Narrative
+			if patientInfo != nil {
+				queryResults, err := QueryPatientData(db, *patientInfo)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to query data: %v", err)})
+					return
+				}
+				contextPrompt = fmt.Sprintf(`Here is the patient's medical data:
+
+%s
+
+Based on this data, please provide a clinical summary.`, queryResults)
+			} else {
+				userMessage = &Message{Role: "user", Content: req.Message}
+			}
 		}
 
-		messages := []Message{
-			{Role: "user", Content: fmt.Sprintf("You are an AI assistant with this context:\n\n%s\n\nUser question: %s", contextPrompt, req.Message)},
+		systemMessage := Message{
+			Role:    "system",
+			Content: agent.Narrative + "\n\n" + contextPrompt,
 		}
 
-		// Get response using the context
+		allMessages := make([]Message, 0, len(history)+2)
+		allMessages = append(allMessages, history...)
+		allMessages = append(allMessages, systemMessage)
+
+		if userMessage != nil {
+			allMessages = append(allMessages, *userMessage)
+		}
+
+		// Get response using the context and history
 		model := agent.Config["model"].(string)
-		model = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 		temperature := agent.Config["temperature"].(float64)
 		maxTokens := int(agent.Config["max_tokens"].(float64))
 
-		response, _, err := llmClient.Complete(messages, model, temperature, &maxTokens)
+		response, _, err := llmClient.Complete(allMessages, model, temperature, &maxTokens)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fmt.Println("response: ", response)
+
+		// Add assistant response to history
+		history = append(history, Message{Role: "assistant", Content: response})
+
+		// Store updated chat history
+		historyJSON, err = json.Marshal(history)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal chat history"})
+			return
+		}
+
+		_, err = db.Exec(`
+			INSERT INTO chat_history (agent_id, user_id, messages)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (agent_id, user_id) 
+			DO UPDATE SET messages = $3`,
+			id, "current_user", historyJSON)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store chat history"})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{"response": response})
 	}
 }
@@ -281,4 +330,35 @@ Context:
 %s
 
 Answer the question based on the context above.`, context)
+}
+
+func extractPatientInfo(message string, llmClient LLMClient) (*PatientQuery, error) {
+	maxTokens := 1024
+	extractPrompt := []Message{{
+		Role: "user",
+		Content: `Extract patient first name, last name, and date of birth (YYYY-MM-DD) from this message.
+				 You must respond with ONLY a JSON object in this exact format, with no other text:
+				 {"firstName": "value", "lastName": "value", "dob": "YYYY-MM-DD"}
+				 If any field cannot be found, use null for that field.
+				 Message: ` + message,
+	}}
+
+	response, _, err := llmClient.Complete(extractPrompt, "anthropic.claude-3-5-sonnet-20240620-v1:0", 0.1, &maxTokens)
+	if err != nil {
+		return nil, err
+	}
+
+	// Trim any potential whitespace or extra characters
+	response = strings.TrimSpace(response)
+
+	var patientInfo PatientQuery
+	if err := json.Unmarshal([]byte(response), &patientInfo); err != nil {
+		return nil, fmt.Errorf("failed to parse LLM response as JSON: %v\nResponse was: %s", err, response)
+	}
+
+	// Only return if we have all required fields
+	if patientInfo.FirstName != "" && patientInfo.LastName != "" && patientInfo.DOB != "" {
+		return &patientInfo, nil
+	}
+	return nil, nil
 }

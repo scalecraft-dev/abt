@@ -156,4 +156,9 @@
   padding: 0.75rem;
   border-radius: 0.375rem;
   margin: 0.5rem 0;
+}
+
+.message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
 } 

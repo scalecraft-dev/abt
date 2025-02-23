@@ -10,6 +10,7 @@ export interface Config {
   temperature: number;
   max_tokens?: number;
   use_rag?: boolean;
+  use_direct_query?: boolean;
 }
 
 export interface Agent {

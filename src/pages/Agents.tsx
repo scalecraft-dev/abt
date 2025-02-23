@@ -36,7 +36,8 @@ const AgentForm: React.FC<{
         model: 'claude-3-opus-20240229',
         temperature: 0.7,
         max_tokens: 1024,
-        use_rag: false
+        use_rag: false,
+        use_direct_query: false
       }
     }
   );
@@ -212,6 +213,26 @@ const AgentForm: React.FC<{
           When enabled, the agent will use document retrieval to enhance its responses
         </div>
       </div>
+      <div className="form-group">
+        <label className="form-label">
+          <input
+            type="checkbox"
+            checked={formData.config.use_direct_query}
+            onChange={(e) => setFormData({
+              ...formData,
+              config: {
+                ...formData.config,
+                use_direct_query: e.target.checked
+              }
+            })}
+            className="form-checkbox"
+          />
+          Enable Direct Query
+        </label>
+        <div className="form-help-text">
+          When enabled, the agent can directly query patient data from configured data sources
+        </div>
+      </div>
       <div className="modal-actions">
         <button className="cancel-button" onClick={onCancel}>
           Cancel
@@ -340,7 +361,8 @@ const Agents: React.FC = () => {
                 model: editingAgent.config.model,
                 temperature: editingAgent.config.temperature,
                 max_tokens: editingAgent.config.max_tokens,
-                use_rag: editingAgent.config.use_rag
+                use_rag: editingAgent.config.use_rag,
+                use_direct_query: editingAgent.config.use_direct_query
               }
             } : undefined}
             onSubmit={isCreating ? handleCreateAgent : handleUpdateAgent}

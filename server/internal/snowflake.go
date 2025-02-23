@@ -20,6 +20,12 @@ type SnowflakeConfig struct {
 	Warehouse string `json:"warehouse"`
 }
 
+type PatientQuery struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	DOB       string `json:"dob"`
+}
+
 func ConnectSnowflake(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var config SnowflakeConfig
@@ -139,6 +145,72 @@ func TestSnowflake(db *sql.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{"message": "Connection test successful"})
 	}
+}
+
+func QueryPatientData(db *sql.DB, params PatientQuery) (string, error) {
+	// First get Snowflake config
+	config, err := getSnowflakeConfig(db)
+	if err != nil {
+		return "", fmt.Errorf("failed to get Snowflake config: %v", err)
+	}
+
+	// Connect to Snowflake
+	snowflakeDB, err := connectToSnowflake(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to Snowflake: %v", err)
+	}
+	defer snowflakeDB.Close()
+
+	query := `
+		SELECT 
+			id,
+			created_at, 
+			code_display,
+			category,
+			value_quantity_value,
+			value_quantity_unit,
+			reference_range_display
+		FROM data_platform_dev.scotty_dev.observation
+		LIMIT 1000  -- Limit results to prevent token overflow
+	`
+
+	rows, err := snowflakeDB.Query(query)
+	fmt.Println(params.FirstName, params.LastName, params.DOB)
+	if err != nil {
+		return "", fmt.Errorf("failed to query patient data: %v", err)
+	}
+	defer rows.Close()
+
+	var result strings.Builder
+	result.WriteString("Recent Observations:\n\n")
+
+	for rows.Next() {
+		var (
+			id, createdAt, codeDisplay                                             string
+			category, valueQuantityValue, valueQuantityUnit, referenceRangeDisplay sql.NullString
+		)
+
+		if err := rows.Scan(&id, &createdAt, &codeDisplay, &category, &valueQuantityValue, &valueQuantityUnit, &referenceRangeDisplay); err != nil {
+			return "", fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		// Handle NULL values
+		value := valueQuantityValue.String
+		unit := valueQuantityUnit.String
+		refRange := referenceRangeDisplay.String
+
+		result.WriteString(fmt.Sprintf("ID: %s\nDate: %s\nCode: %s\nCategory: %s\nValue: %s %s\nReference Range: %s\n\n",
+			id,
+			createdAt,
+			codeDisplay,
+			category.String,
+			value,
+			unit,
+			refRange,
+		))
+	}
+
+	return result.String(), nil
 }
 
 func connectToSnowflake(config SnowflakeConfig) (*sql.DB, error) {

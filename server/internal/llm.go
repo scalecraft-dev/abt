@@ -164,10 +164,15 @@ func (c *AnthropicClient) CreateEmbeddings(ctx context.Context, texts []string) 
 }
 
 func (c *BedrockClient) Complete(messages []Message, model string, temperature float64, maxTokens *int) (string, Usage, error) {
+	// Convert system message to user message
 	var formattedMessages []map[string]interface{}
 	for _, msg := range messages {
+		role := msg.Role
+		if role == "system" {
+			role = "user"
+		}
 		formattedMessages = append(formattedMessages, map[string]interface{}{
-			"role": msg.Role,
+			"role": role,
 			"content": []map[string]string{{
 				"type": "text",
 				"text": msg.Content,

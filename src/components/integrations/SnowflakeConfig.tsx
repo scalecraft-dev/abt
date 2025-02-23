@@ -1,28 +1,42 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { api, SnowflakeConfig as SnowflakeConfigType } from '../../services/api';
+import { api, SnowflakeConfig as SnowflakeConfigType, Integration } from '../../services/api';
 
 interface SnowflakeConfigProps {
+  formData: Integration;
+  setFormData: (data: Integration) => void;
   onClose: () => void;
 }
 
-const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
+const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ formData, setFormData, onClose }) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, getValues, formState: { errors } } = useForm<SnowflakeConfigType>();
 
-  const onSubmit = async (data: SnowflakeConfigType) => {
+  const onSubmit = async () => {
     setIsConnecting(true);
     try {
-      await api.createIntegration({
-        name: "Snowflake",
-        type: "data-warehouse",
-        description: "Snowflake data warehouse connection",
-        provider: "snowflake",
-        config: data
-      });
-      alert('Successfully saved Snowflake configuration');
+      if (formData.id) {
+        // Update existing integration
+        await api.updateIntegration(formData.id, {
+          name: formData.name,
+          type: formData.type,
+          description: formData.description,
+          provider: formData.provider,
+          config: formData.config || {}
+        });
+        alert('Successfully updated Snowflake configuration');
+      } else {
+        // Create new integration
+        await api.createIntegration({
+          name: "Snowflake",
+          type: "data-warehouse",
+          description: "Snowflake data warehouse connection",
+          provider: "snowflake",
+          config: formData.config || {}
+        });
+        alert('Successfully saved Snowflake configuration');
+      }
       onClose();
     } catch (error: any) {
       alert(`Failed to save connection: ${error.message}`);
@@ -34,8 +48,14 @@ const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
   const testConnection = async () => {
     setIsTesting(true);
     try {
-      const data = getValues();
-      await api.testSnowflakeConnection(data);
+      await api.testSnowflakeConnection({
+        account: formData.config?.account || '',
+        username: formData.config?.username || '',
+        password: formData.config?.password || '',
+        database: formData.config?.database || '',
+        schema: formData.config?.schema || '',
+        warehouse: formData.config?.warehouse || ''
+      });
       alert('Connection test successful');
     } catch (error: any) {
       alert(`Test failed: ${error.message}`);
@@ -45,89 +65,78 @@ const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="integration-form">
-      <div className="integration-form-group">
-        <label className="integration-form-label">Account</label>
+    <div className="modal-content">
+      <div className="form-group">
+        <label>Account</label>
         <input
-          {...register('account', { required: 'Account is required' })}
           type="text"
-          placeholder="your-account.snowflakecomputing.com"
-          className="integration-form-input"
+          value={formData.config?.account || ''}
+          onChange={e => setFormData({
+            ...formData,
+            config: { ...formData.config, account: e.target.value }
+          })}
         />
-        {errors.account && (
-          <span className="integration-form-error">{errors.account.message}</span>
-        )}
       </div>
-
-      <div className="integration-form-group">
-        <label className="integration-form-label">Username</label>
+      <div className="form-group">
+        <label>Username</label>
         <input
-          {...register('username', { required: 'Username is required' })}
           type="text"
-          className="integration-form-input"
+          value={formData.config?.username || ''}
+          onChange={e => setFormData({
+            ...formData,
+            config: { ...formData.config, username: e.target.value }
+          })}
         />
-        {errors.username && (
-          <span className="integration-form-error">{errors.username.message}</span>
-        )}
       </div>
-
-      <div className="integration-form-group">
-        <label className="integration-form-label">Password</label>
+      <div className="form-group">
+        <label>Password</label>
         <div className="integration-form-password">
           <input
-            {...register('password', { required: 'Password is required' })}
             type={showPassword ? 'text' : 'password'}
-            className="integration-form-input"
+            value={formData.config?.password || ''}
+            onChange={e => setFormData({
+              ...formData,
+              config: { ...formData.config, password: e.target.value }
+            })}
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="integration-form-password-toggle"
-          >
+          <button type="button" onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? 'Hide' : 'Show'}
           </button>
         </div>
-        {errors.password && (
-          <span className="integration-form-error">{errors.password.message}</span>
-        )}
       </div>
-
-      <div className="integration-form-group">
-        <label className="integration-form-label">Database</label>
+      <div className="form-group">
+        <label>Database</label>
         <input
-          {...register('database', { required: 'Database is required' })}
           type="text"
-          className="integration-form-input"
+          value={formData.config?.database || ''}
+          onChange={e => setFormData({
+            ...formData,
+            config: { ...formData.config, database: e.target.value }
+          })}
         />
-        {errors.database && (
-          <span className="integration-form-error">{errors.database.message}</span>
-        )}
       </div>
-
-      <div className="integration-form-group">
-        <label className="integration-form-label">Schema</label>
+      <div className="form-group">
+        <label>Schema</label>
         <input
-          {...register('schema', { required: 'Schema is required' })}
           type="text"
-          className="integration-form-input"
+          value={formData.config?.schema || ''}
+          onChange={e => setFormData({
+            ...formData,
+            config: { ...formData.config, schema: e.target.value }
+          })}
         />
-        {errors.schema && (
-          <span className="integration-form-error">{errors.schema.message}</span>
-        )}
       </div>
-
-      <div className="integration-form-group">
-        <label className="integration-form-label">Warehouse</label>
+      <div className="form-group">
+        <label>Warehouse</label>
         <input
-          {...register('warehouse', { required: 'Warehouse is required' })}
           type="text"
-          className="integration-form-input"
+          value={formData.config?.warehouse || ''}
+          onChange={e => setFormData({
+            ...formData,
+            config: { ...formData.config, warehouse: e.target.value }
+          })}
         />
-        {errors.warehouse && (
-          <span className="integration-form-error">{errors.warehouse.message}</span>
-        )}
       </div>
-
       <div className="integration-form-buttons">
         <button
           type="button"
@@ -138,7 +147,8 @@ const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
           {isTesting ? 'Testing...' : 'Test Connection'}
         </button>
         <button
-          type="submit"
+          type="button"
+          onClick={onSubmit}
           disabled={isConnecting}
           className="create-button"
         >
@@ -152,7 +162,7 @@ const SnowflakeConfig: React.FC<SnowflakeConfigProps> = ({ onClose }) => {
           Cancel
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 

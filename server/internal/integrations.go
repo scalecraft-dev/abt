@@ -92,9 +92,23 @@ func GetIntegration(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := json.Unmarshal(configJSON, &integration.Config); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse config"})
-			return
+		// Parse the config based on provider type
+		switch integration.Provider {
+		case "snowflake":
+			var snowflakeConfig SnowflakeConfig
+			if err := json.Unmarshal(configJSON, &snowflakeConfig); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse config"})
+				return
+			}
+			// Convert to map[string]interface{}
+			integration.Config = map[string]interface{}{
+				"account":   snowflakeConfig.Account,
+				"username":  snowflakeConfig.Username,
+				"password":  snowflakeConfig.Password,
+				"database":  snowflakeConfig.Database,
+				"schema":    snowflakeConfig.Schema,
+				"warehouse": snowflakeConfig.Warehouse,
+			}
 		}
 
 		c.JSON(http.StatusOK, integration)
